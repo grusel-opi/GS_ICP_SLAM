@@ -3,6 +3,8 @@ import sys
 import numpy as np
 from matplotlib import pyplot
 from scipy.spatial.transform import Rotation as R
+from glob import glob
+import os
 
 class TrajManager:
     def __init__(self, which_dataset, dataset_path):
@@ -16,13 +18,16 @@ class TrajManager:
         self.which_dataset = which_dataset
         self.dataset_path = dataset_path
 
+        # self.gt_poses must contain 4x4 pose matrices
+        # poses are associated with rgb and depth images
+        # timestamps must differ by max_dt=0.08 max. for association
+
         if self.which_dataset == "tum":
             self.gt_poses = self.tum_load_poses(self.dataset_path + '/traj.txt')
         elif self.which_dataset == "replica":
             self.gt_poses = self.replica_load_poses(self.dataset_path + '/traj.txt')
         else:
-            print("Unknown dataset!")
-            sys.exit()
+            self.gt_poses = self.load_dummy_poses()
         
         self.gt_poses_vis = np.array([x[:3, 3] for x in self.gt_poses])
 
@@ -38,7 +43,14 @@ class TrajManager:
         T[3, :] = [0, 0, 0, 1]     
         # return np.linalg.inv(T)
         return T
-    
+
+    def load_dummy_poses(self):
+        n = len(glob(os.path.join(os.path.join(self.dataset_path, "rgb"), "*")))
+        i = np.zeros((n, 4, 4))
+        idx = np.arange(4)
+        i[:, idx, idx] = 1
+        return i
+
     def replica_load_poses(self, path):
         poses = []
         with open(path, "r") as f:
@@ -75,6 +87,9 @@ class TrajManager:
         #                     float(line[7])])
         #     c2w = self.quaternion_rotation_matrix(q, xyz)
         #     poses.append(c2w)
+
+        # format of groundtruth.txt: timestamp tx ty tz qx qy qz qw
+
         frame_rate = 32
 
         if os.path.isfile(os.path.join(self.dataset_path, 'groundtruth.txt')):

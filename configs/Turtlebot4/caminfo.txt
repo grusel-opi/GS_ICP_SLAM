@@ -1,0 +1,4 @@
+## camera parameters
+# NOT DOUBLE CHECKED! Just for testing.
+H W fx fy cx cy depth_scale depth_trunc dataset_type
+1920 1080 1555.92578125 1555.92578125 957.6197509765625 564.3787231445312 1000.0 12.0 turtlebot4
